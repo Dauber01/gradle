@@ -1,0 +1,80 @@
+group 'com.imooc.gradle'
+version '1.0-SNAPSHOT'
+
+repositories {
+    maven {
+        url 'http://nexus.it.taikang.com/content/groups/maven-public/'
+    }
+    mavenCentral()
+}
+
+allprojects{
+    apply plugin: 'java'
+    sourceCompatibility = 1.8
+    apply plugin: 'maven-publish'
+    publishing{
+        publications{
+            myPublish(MavenPublication){
+                from components.java
+            }
+        }
+        repositories{
+            maven{
+                name "myRepo"
+                url ""
+            }
+        }
+    }
+}
+
+subprojects{
+    repositories {
+        maven {
+            url 'http://nexus.it.taikang.com/content/groups/maven-public/'
+        }
+        mavenCentral()
+    }
+    dependencies {
+        compile ('org.hibernate:hibernate-core:3.6.3.Final')
+        compile 'ch.qos.logback:logback-classic:1.2.1'
+        testCompile group: 'junit', name: 'junit', version: '4.12'
+    }
+}
+
+/*configurations.all {
+    resolutionStrategy{
+        failOnVersionConflict()
+        force 'org.slf4j:slf4j-api:1.7.24'
+    }
+}*/
+
+/*dependencies {
+    compile ('org.hibernate:hibernate-core:3.6.3.Final')*//*{
+        exclude group:"org.slf4j",module:"slf4j-api"
+    }*//*
+    compile 'ch.qos.logback:logback-classic:1.2.1'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}*/
+
+/*def makeDir = {
+    path ->
+        File file = new File(path);
+        if (!file.exists()){
+            file.mkdir();
+        }
+}
+
+task makeJavaDir(){
+    def paths = ['src/rescource'];
+    doFirst {
+        paths.forEach(makeDir);
+    }
+}
+
+task makeWebDir(){
+    dependsOn 'makeJavaDir'
+    def paths = ['src/main/webapp'];
+    doLast {
+        paths.forEach(makeDir);
+    }
+}*/
