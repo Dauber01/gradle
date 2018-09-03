@@ -6,3 +6,28 @@ repositories {
 
 dependencies {
 }
+//getParentPojec()
+//获取父项目
+/*def getParentPojec(){
+    Project project = this.getParent()
+    println "the parent project is ${project.name}"
+}*/
+
+println this.javac.version1
+//文件复制方法
+/*copy {
+    from file('like.txt')
+    into getRootDir()
+    exclude {}
+    rename {}
+}*/
+//遍历文件树的方法
+fileTree('test'){FileTree fileTree ->
+    fileTree.visit{FileTreeElement element ->
+        println "the element name is ${element.name}"
+        copy {
+            from element.file
+            into getRootDir().path + '/test/'
+        }
+    }
+}

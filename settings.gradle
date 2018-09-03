@@ -3,3 +3,8 @@ include 'model'
 include 'repository'
 include 'web'
 
+println '初始化阶段开始执行...'
+
+if (getProperty('test') ? test.toBoolean() : false){
+    include 'web'
+}

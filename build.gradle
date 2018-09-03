@@ -1,4 +1,4 @@
-group 'com.imooc.gradle'
+//group 'com.imooc.gradle'
 version '1.0-SNAPSHOT'
 
 repositories {
@@ -7,6 +7,8 @@ repositories {
     }
     mavenCentral()
 }
+//通过引入语句引入对属性的设置
+apply from: this.file('gradle.gradle')
 
 allprojects{
     apply plugin: 'java'
@@ -78,3 +80,171 @@ task makeWebDir(){
         paths.forEach(makeDir);
     }
 }*/
+//在配置开始之前的监听回调
+this.beforeEvaluate {
+    println '初始话阶段执行完毕...'
+}
+
+//在配置结束之后的监听回调
+this.afterEvaluate {
+    println '配置阶段执行完毕...'
+}
+
+//在gradle生命周期执行完毕之后,进行监听,即task任务结束之后,的回调监听
+this.gradle.buildFinished {
+    println '执行阶段执行完毕...'
+}
+
+//在配置开始之前的监听回调
+this.gradle.beforeProject {}
+
+//在配置结束之后的监听回调
+this.gradle.afterProject {}
+
+//通过监听的方式
+this.gradle.addListener{}
+
+//获取project中的各个对应的文件夹,并进行打印操作
+println getProjectDir().absolutePath    //打印当前project的绝对路径
+println getRootDir().absolutePath   //打印根工程的project路径
+println getBuildDir().absolutePath  //打印当前project的build路径
+//文件查找
+println findFile('gradle.gradle')
+def findFile(String path){
+    try{
+        def file = file(path)
+        return file.text
+    }catch (GradleException e){
+        println "can not find the file"
+    }
+    return null
+}
+
+//通过project名字获取project对象,利用其进行该project的属性配置
+project('web'){ Project project ->
+    dependencies{
+
+    }
+
+}
+
+println project('web').version
+//获取树下的所有project,并进行全部配置
+allprojects {
+    apply plugin: 'java'
+    //group 'com.imooc.gradle'
+    //version version1
+
+    dependencies {
+
+    }
+
+}
+//让所有的子project都拥有该属性,但是该方法的缺陷是这段代码会在每个子project都编译一遍
+/*subprojects {
+    //用来定义拓展属性
+    ext{
+        version1 =  '1.0-SNAPSHOT'
+    }
+}*/
+//可直接在父project中利用拓展与语句块进行声明,因为在源码中,每个子project都会继承父project的属性
+//用来定义拓展属性
+/*ext{
+    version1 =  '1.0-SNAPSHOT'
+}*/
+//获取该project的所有子节点的项目,不包含该项目本身
+/*subprojects { Project project ->
+    if (project.plugins.hasPlugin('java')){
+        apply from ('../publishToMaven.gradle')
+    }
+}*/
+
+//println project('web').group
+
+
+
+//getRootPro()
+
+//获取树中的所有project
+def getProjectList(){
+    def projects = this.getAllprojects()
+    projects.eachWithIndex{ Project project, int index ->
+        if (index == 0){
+            println "root project ${project.name}"
+        }else {
+            println "project ${project.name}"
+        }
+    }
+}
+
+//获取子项目所有project对象
+def getSubProject(){
+    def projects = this.getSubprojects()
+    projects.each {Project project ->
+        println "subProject name ${project.name}"
+    }
+}
+
+//获取根节点的root project
+def getRootPro(){
+    def project = this.getRootProject()
+    println "the root project is ${project.name}"
+}
+
+//
+buildscript { ScriptHandler scriptHandler ->
+
+    //配置工程仓库的地址
+    repositories { RepositoryHandler repositoryHandler ->
+        jcenter()
+        mavenCentral()
+        mavenLocal()
+        ivy{} //ant所用的库
+        maven {
+            name 'ahah'
+            url ''
+            credentials{    //私有库的权限验证
+                username = 'admin'
+                password = 'admin123'
+            }
+        }
+    }
+
+    //project里面的属性用来配置project里面的依赖,buildscript里面的用来配置groovy所有的依赖
+    dependencies {
+        //classpath 'com.android.tools.build:gradle:2.2.2'
+    }
+
+}
+
+dependencies {
+    /*compile fileTree(include: ['*.jar'],dir: 'libs')    //用来导入有N多文件的路径/文件夹
+    compile rootProject.ext.dependece.logs  //导入配置文件中的ext拓展属性中的属性代表的依赖
+    //依赖lib工程
+    compile project('web')
+    compile(rootProject.ext.dependece.sk){
+        exclude modle: 'sopput-mv4' //假设sk和logs中的文件有冲突,则在其中的一个里面用exclude进行排除,exclude后面的值以key value形式存在,key表示范围,value是名称
+        //exclude group: 'skt'
+        transitive false    //是否在项目中使用传递性依赖,默认是false,不实用传递性依赖
+        changing = true   //每次都从服务器上拉取
+    }
+    provided(rootProject.ext.dependece.sk)*/
+}
+
+task apkcopy(){
+
+    doLast{
+        //在gradle的执行阶段去执行
+        def sourcePath = getRootDir().absolutePath + '/test/'
+        def desation = "D:\\"
+        def command = "mv -f ${sourcePath} ${desation}"
+        exec{
+            try{
+                executable 'bash'
+                args '-c', command
+            }catch (GradleException e){
+                println the exec is failed
+            }
+        }
+    }
+}
