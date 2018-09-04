@@ -286,3 +286,22 @@ this.afterEvaluate { Project project ->
         println "构建执行耗时 : ${endBuildTime - startBuildTime}"
     }
 }
+//建立多个相互依赖的task任务
+/**task taskA{
+    doLast{
+        println 'taskA'
+    }
+}
+task taskB{
+    doLast{
+        println 'taskB'
+    }
+}
+//用dependencies进行强依赖，标定执行的顺序
+task taskC(dependsOn:[taskA, taskB]){
+    doLast{
+        println 'taskC'
+    }
+}*/
+
+
