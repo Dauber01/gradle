@@ -231,6 +231,7 @@ dependencies {
     provided(rootProject.ext.dependece.sk)*/
 }
 
+/*
 task apkcopy(){
 
     doLast{
@@ -246,5 +247,42 @@ task apkcopy(){
                 println the exec is failed
             }
         }
+    }
+}*/
+
+task hello(group: 'action', description:'for test1'){
+    doFirst {
+        println "say hello"
+    }
+}
+
+hello.doFirst {
+    println "out say hello"
+}
+
+/*
+this.tasks.create(name: 'word'){
+    setGroup('action')
+    setDescription('for test2')
+    doLast {
+        println "say word"
+    }
+}*/
+
+//计算build的运行时长
+def startBuildTime, endBuildTime
+//在配置加载之后进行task任务的干涉最为安全,因为task任务加载的先后顺序,在配置阶段处理task容易出现task未加载完的风险,出现报错
+this.afterEvaluate { Project project ->
+    def preBuildTask = project.tasks.getByName('testClasses')
+    //preBuild是build依赖的task中最先执行的
+    preBuildTask.doFirst {
+        startBuildTime = System.currentTimeMillis()
+        println "构建开始的时间为 : ${startBuildTime}"
+    }
+    //build是build的task中最后执行的一个
+    def buildTask = this.tasks.getByName('build')
+    buildTask.doLast {
+        endBuildTime = System.currentTimeMillis()
+        println "构建执行耗时 : ${endBuildTime - startBuildTime}"
     }
 }

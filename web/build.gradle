@@ -13,7 +13,7 @@ dependencies {
     println "the parent project is ${project.name}"
 }*/
 
-println this.javac.version1
+/*println this.javac.version1*/
 //文件复制方法
 /*copy {
     from file('like.txt')
@@ -22,7 +22,7 @@ println this.javac.version1
     rename {}
 }*/
 //遍历文件树的方法
-fileTree('test'){FileTree fileTree ->
+/*fileTree('test'){FileTree fileTree ->
     fileTree.visit{FileTreeElement element ->
         println "the element name is ${element.name}"
         copy {
@@ -30,4 +30,23 @@ fileTree('test'){FileTree fileTree ->
             into getRootDir().path + '/test/'
         }
     }
-}
+}*/
+
+/*
+//计算build的运行时长
+def startBuildTime, endBuildTime
+//在配置加载之后进行task任务的干涉最为安全,因为task任务加载的先后顺序,在配置阶段处理task容易出现task未加载完的风险,出现报错
+this.afterEvaluate { Project project ->
+    def preBuildTask = project.tasks.getByName('preBuild')
+    //preBuild是build依赖的task中最先执行的
+    preBuildTask.doFirst {
+        startBuildTime = System.currentTimeMillis()
+        println "构建开始的时间为 : ${startBuildTime}"
+    }
+    //build是build的task中最后执行的一个
+    def buildTask = this.tasks.getByName('build')
+    buildTask.doLast {
+        endBuildTime = System.currentTimeMillis()
+        println "构建执行耗时 : ${endBuildTime - startBuildTime}"
+    }
+}*/
