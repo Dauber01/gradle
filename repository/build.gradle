@@ -1,3 +1,6 @@
+//import com.sun.deploy.xml.XMLParser
+import groovy.xml.MarkupBuilder
+
 repositories {
     mavenCentral()
 }
@@ -7,18 +10,176 @@ dependencies {
 }
 //建立多个相互依赖的task任务
 task taskA{
+    //mustRunAfter taskB
     doLast{
         println 'taskA'
     }
 }
 task taskB{
+    mustRunAfter taskA  //用来定义A和B的执行顺序
+    shouldRunAfter  //定义AB执行顺序,同mustRunAfter,但是并不能确保B在A之后执行,一般用同mustRunAfter
     doLast{
         println 'taskB'
     }
 }
 //用dependencies进行强依赖，标定执行的顺序
-task taskC(dependsOn:[taskA, taskB]){
+task taskC(/*dependsOn:[taskA, taskB]*/){
     doLast{
         println 'taskC'
     }
+}
+//利用外部dependsOn方法进行强依赖
+taskC.dependsOn(taskA, taskB)
+
+//建立task依赖
+task libK << {
+    println 'taskK'
+}
+task libF << {
+    println 'taskF'
+}
+//动态的通过加载依赖的名字进行依赖
+task taskD{     //在执行task的时候有可能出现task名字被占用的情况，会报错，这时只需要尝试更改task的名字即可
+    dependsOn this.tasks.findAll {task ->
+        return task.name.startsWith('lib')
+    }
+    doLast {
+        println 'libC'
+    }
+}
+//文件复制分文件任务
+task handleReleasesFile{
+    def topath = new File(this.buildDir, 'test/')
+    def srcfile = file('releases.xml')
+    doLast {
+        def releases = new XmlParser().parse(srcfile)
+        releases.release.each{ releaseNote ->
+            //打印开始的标记
+            println 'the work is begining...'
+            topath.mkdir()
+            def name = releaseNote.versionName.text()
+            def code = releaseNote.versionCode.text()
+            def info = releaseNote.versionInfo.text()
+            def testFile = new File(topath, "release-${name}.txt")
+            testFile.withWriter { writer ->
+                writer.write(" name -> ${name}, code -> ${code}, info -> ${info}")
+            }
+        }
+    }
+}
+//文件复制文件的测试task
+task handleReleasesFileTest(dependsOn: handleReleasesFile){
+    def fileTree = fileTree(this.buildDir.path + 'test/')
+    fileTree.each {
+        println "the file is ${it}"
+    }
+    println 'the task is Success '
+}
+
+//定义对应的拓展属性,以便在task中进行操作
+ext{
+    versionCode = '300'
+    versionName = '3.0.0'
+    versionInfo = 'App的第3个版本，上线了一些最基础的功能'
+    deskfile = file('releasek.xml')
+    if (deskfile != null && !deskfile.exists()){
+        deskfile.createNewFile()
+    }
+}
+//定义输入task进行写文件
+task writerTask{
+    //为task指定输入
+    inputs.property('versionCode', this.versionCode)
+    inputs.property('versionName', this.versionName)
+    inputs.property('versionInfo', this.versionInfo)
+    //为task指定输出
+    outputs.file deskfile
+    doLast{
+        def data = inputs.getProperties()
+        File file = outputs.getFiles().getSingleFile()
+        //将map转化为实体对象
+        def versionMsg = new VersionMsg(data)
+        def sw = new StringWriter()
+        def xbuilder = new MarkupBuilder(sw)
+        if (file.text != null && file.text.size() <= 0){
+            xbuilder.releases{
+                releas{
+                    versionCode(versionMsg.versionCode)
+                    versionName(versionMsg.versionName)
+                    versionInfo(versionMsg.versionInfo)
+                }
+            }
+            file.withWriter{writer ->
+                writer.append(sw.toString())
+            }
+        }else {
+            xbuilder.release{
+                versionCode(versionMsg.versionCode)
+                versionName(versionMsg.versionName)
+                versionInfo(versionMsg.versionInfo)
+            }
+            //将所生成的节点信息数据插入到根节点之下
+            def lines = file.readLines()
+            def length = lines.size() - 1
+            file.withWriter {writer ->
+                lines.eachWithIndex{ String line, int index ->
+                    if(index != length){
+                        writer.append(line + '\r\n')
+                    }else if(index == length){
+                        writer.append('\r\n' + sw.toString() + '\r\n')
+                        writer.append(lines.get(length))
+                    }
+                }
+            }
+        }
+    }
+}
+//定义读取task进行读文件
+task readTask{
+    inputs.file deskfile
+    doLast{
+        def file = inputs.files.singleFile
+        println file.text
+    }
+}
+task testTask{
+    dependsOn readTask,writerTask
+    doLast{
+        println '写入和读取文件完毕'
+    }
+}
+class VersionMsg{
+    private String versionCode
+    private String versionName
+    private String versionInfo
+
+}
+/*
+task taskASK{
+    mustRunAfter taskss
+    doLast{
+        println 'taskM'
+    }
+}
+task taskss{
+    mustRunAfter tasknn
+    doLast{
+        println 'taskS'
+    }
+}
+task tasknn{
+    doLast{
+        println 'taskN'
+    }
+}*/
+this.project.afterEvaluate {
+    def buildtask = this.tasks.getByName('build')
+    if(buildtask == null){
+        throw new GradleException('haha')
+    }
+    buildtask.mustRunAfter testTask
+    /*buildtask.doLast {
+        println '-------------------'
+        testTask.execute()
+    }*/
 }
